@@ -74,7 +74,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Handle permission result for notifications
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, check cart and show notification if needed
+                SharedPreferences prefs = getSharedPreferences("CartPrefs", MODE_PRIVATE);
+                String items = prefs.getString("cart_items", "");
+                if (!items.isEmpty()) {
+                    showCartNotification(items);
+                }
+            }
+        }
+    }
+
     private void showCartNotification(String items) {
+        // Check permission before posting notification (Android 13+)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                return; // Don't post notification if permission not granted
+            }
+        }
         createNotificationChannel();
 
         Intent intent = new Intent(this, Cart.class);
